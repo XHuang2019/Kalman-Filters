@@ -4,14 +4,13 @@
  * @revised by Xiaoyu Huang
  * @date: 2019.01.05
  */
-
+#include "pch.h"
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
+#include "KalmanFilter.h"
 
-#include "KalmanFilter.hpp"
-
-int main(int argc, char* argv[]) {
+int main() {
 
   int n = 3; // Number of states
   int m = 1; // Number of measurements
@@ -40,7 +39,7 @@ int main(int argc, char* argv[]) {
   std::cout << "P: \n" << P << std::endl;
 
   // Construct the filter
-  KalmanFilter kf(A, C, Q, R, P);
+  KalmanFilter kf(dt, A, C, Q, R, P);
 
   // List of noisy position measurements (y)
   std::vector<double> measurements = {
@@ -58,7 +57,7 @@ int main(int argc, char* argv[]) {
   // Best guess of initial states
   Eigen::VectorXd x0(n);
   x0 << measurements[0], 0, -9.81;
-  kf.init(x0);
+  kf.init(0, x0);
 
   // Feed measurements into filter, output estimated states
   double t = 0;

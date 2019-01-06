@@ -4,11 +4,10 @@
 * @revised by Xiaoyu Huang
 * @date: 2019.01.05
 */
-
+#include "pch.h"
 #include <iostream>
 #include <stdexcept>
-
-#include "KalmanFilter.hpp"
+#include "KalmanFilter.h"
 
 KalmanFilter::KalmanFilter(
     double dt,
