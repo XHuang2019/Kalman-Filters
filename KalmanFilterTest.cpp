@@ -70,6 +70,6 @@ int main() {
     std::cout << "t = " << t << ", " << "y[" << i << "] = " << y.transpose()
         << ", x_hat[" << i << "] = " << kf.state().transpose() << std::endl;
   }
-
+  std::cout << "So far so good! 01/05/2019" << std::endl;
   return 0;
 }
