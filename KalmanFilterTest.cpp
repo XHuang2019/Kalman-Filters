@@ -9,9 +9,9 @@
 #include <vector>
 #include <Eigen/Dense>
 
-#include "kalman.hpp"
+#include "KalmanFilter.hpp"
 
-int main() {
+int main(int argc, char* argv[]) {
 
   int n = 3; // Number of states
   int m = 1; // Number of measurements
