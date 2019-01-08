@@ -43,7 +43,7 @@ void KalmanFilter::init() {
 	initialized = true;
 }
 
-void KalmanFilter::update(const Eigen::VectorXd& y) { // is y being updated with a const notation?
+void KalmanFilter::update(const Eigen::VectorXd& y) { // y is actual measurement and is not being updated
 
 	if (!initialized) {
 		throw std::runtime_error("Filter is not initialized!");

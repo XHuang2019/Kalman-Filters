@@ -2,21 +2,32 @@
 * @original author: Hayk Martirosyan https://github.com/hmartiro/kalman-cpp.git
 * @revised by Xiaoyu Huang on 2019.01.05
 Future modification:
-1. check observability
-2. add B matrix
+1. Added B, D matrix
+2. Check observability
 */
+
+/* Linear State Space Model :
+	X_dot = A * X + B * U
+	Y = C * X + D * U
+	X: states
+	U: inputs
+	Y: measurements
+
+	Definition of Matrices
+	A - State matrix
+	B - Input matrix
+	C - Output matrix
+	D - Feedforward matrix
+	Q - Process noise covariance
+	R - Measurement noise covariance
+	P - Estimate error covariance
+*/
+
 #include <Eigen/Dense>
 #pragma once
 
 class KalmanFilter {
-/* Definition of Matrices
-A - State matrix
-B - Input matrix
-C - Output matrix
-Q - Process noise covariance
-R - Measurement noise covariance
-P - Estimate error covariance
-*/
+
 private:
 
 	// Matrices for computation
