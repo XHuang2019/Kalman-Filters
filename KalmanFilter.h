@@ -2,16 +2,18 @@
 * @original author: Hayk Martirosyan https://github.com/hmartiro/kalman-cpp.git
 * @revised by Xiaoyu Huang on 2019.01.05
 Future modification:
-1. Added B, D matrix
-2. Check observability
+1. Check dimensions
+2. Visualize results
 */
 
 /* Linear State Space Model :
-	X_dot = A * X + B * U
-	Y = C * X + D * U
+	X_dot = A * X + B * U + w
+	Y = C * X + D * U + v
 	X: states
 	U: inputs
 	Y: measurements
+	w: process noise
+	v: measurement noise
 
 	Definition of Matrices
 	A - State matrix
@@ -28,35 +30,15 @@ Future modification:
 
 class KalmanFilter {
 
-private:
-
-	// Matrices for computation
-	Eigen::MatrixXd A, C, Q, R, P, K, P0;
-	// System dimensions
-	int n; // number of states
-	int m; // number of measurements
-
-	// Initial and current time
-	double t0, t;
-	// Discrete time step
-	double dt;
-
-	bool initialized;
-
-	// n-size identity (why needed?)
-	Eigen::MatrixXd I;
-
-	// Estimated states
-	Eigen::VectorXd x_hat, x_hat_new;
-
-
 public:
 
 	// Constructor 1
 	KalmanFilter(
-		double dt,
+		double Ts,
 		const Eigen::MatrixXd& A,
+		const Eigen::MatrixXd& B, 
 		const Eigen::MatrixXd& C,
+		const Eigen::MatrixXd& D, 
 		const Eigen::MatrixXd& Q,
 		const Eigen::MatrixXd& R,
 		const Eigen::MatrixXd& P
@@ -71,13 +53,107 @@ public:
 	// Initialize the filter with a guess for initial states.
 	void init(double t0, const Eigen::VectorXd& x0);
 
+	// Set state matrix A
+	void setA(const Eigen::MatrixXd &A) { A_ = A; }
+
+	// Set input matrix B
+	void setB(const Eigen::MatrixXd &B) { B_ = B; }
+
+	// Set output matrix C
+	void setC(const Eigen::MatrixXd &C) { C_ = C; }
+
+	// Set feedforward matrix D
+	void setD(const Eigen::MatrixXd &D) { D_ = D; }
+
+	// Set process noise covariance Q
+	void setQ(const Eigen::MatrixXd &Q) { Q_ = Q; }
+
+	// Set measurement noise covariance R
+	void setR(const Eigen::MatrixXd &R) { R_ = R; }
+
+	// Return state matrix A
+	const Eigen::MatrixXd &getA() const { return A_; }
+
+	// Return input matrix B
+	const Eigen::MatrixXd &getB() const { return B_; }
+
+	// Return output matrix C
+	const Eigen::MatrixXd &getC() const { return C_; }
+
+	// Return feedforward matrix D
+	const Eigen::MatrixXd &getD() const { return D_; }
+
+	// Return process noise covariance Q
+	const Eigen::MatrixXd &getQ() const { return Q_; }
+
+	// Return measurement noise covariance R
+	const Eigen::MatrixXd &getR() const { return R_; }
+
 	// Update the estimated state based on measured values.The time step is assumed to remain constant.
-	void update(const Eigen::VectorXd& y);
+	void update(const Eigen::VectorXd& y, const Eigen::VectorXd& u);
 
-	// Update the estimated state based on measured values using the given time step and dynamics matrix (why needed?)
-	void update(const Eigen::VectorXd& y, double dt, const Eigen::MatrixXd A);
+	// Update the estimated state based on measured values using the given time step and dynamics matrix (needed?)
+	void update(const Eigen::VectorXd& y, const Eigen::VectorXd& u, double dt, const Eigen::MatrixXd A);
 
-	// Return the current state and time.
-	Eigen::VectorXd state() { return x_hat; };
-	double time() { return t; };
+	// Return the current state estimate
+	Eigen::VectorXd getStateEst() const { return x_aPost; }
+	
+	// Return the current state estimate
+	Eigen::MatrixXd getErrorCov() const { return P_aPost; }
+
+	// Return current time
+	double getTime() { return t; }
+
+private:
+	// Sampling time
+	double Ts;
+
+	// Dimensions
+	int nX; // dimension of states (n)
+	int nY; // number of measurements (m)
+	int nU; // number of control inputs (l)
+
+	// State matrix (nX by nX)
+	Eigen::MatrixXd A_;
+	
+	// Input matrix (nX by nU)
+	Eigen::MatrixXd B_;
+
+	// Output matrix (nY by nX)
+	Eigen::MatrixXd C_;
+	
+	// Feedforward matrix (nY by nU)
+	Eigen::MatrixXd D_;
+
+	// Process noise covariance (nX by nX)
+	Eigen::MatrixXd Q_;
+
+	// Measurement noise covariance (nY by nY)
+	Eigen::MatrixXd R_;
+
+	// Kalman gain 
+	Eigen::MatrixXd K;
+
+	// a-priori error covariance (nX by nX)
+	Eigen::MatrixXd P_aPrio;
+	// a-posteriori error covariance (nX by nX)
+	Eigen::MatrixXd P_aPost;
+
+	// a-priori state estimate
+	Eigen::VectorXd x_aPrio;
+	// a-posteriori state estimate
+	Eigen::VectorXd x_aPost;
+	
+	// Initial time
+	double t0;
+
+	// Current time
+	double t;
+
+	// Denote whether KF has been initialized
+	bool initialized = false;
+
+	// n-size identity (needed?)
+	Eigen::MatrixXd I;
+
 };

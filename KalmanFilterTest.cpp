@@ -12,20 +12,25 @@
 
 int main() {
 
-	int n = 3; // Number of states
-	int m = 1; // Number of measurements
+	int n = 3;	// Number of states
+	int l = 1;	// Number of inputs
+	int m = 1;	// Number of measurements
 
 	double dt = 1.0/30; // Time step
 
-	Eigen::MatrixXd A(n, n); // System dynamics matrix
-	Eigen::MatrixXd C(m, n); // Output matrix
-	Eigen::MatrixXd Q(n, n); // Process noise covariance
-	Eigen::MatrixXd R(m, m); // Measurement noise covariance
-	Eigen::MatrixXd P(n, n); // Estimate error covariance
+	Eigen::MatrixXd A(n, n);	// State matrix
+	Eigen::MatrixXd B(n, l);		// Input matrix
+	Eigen::MatrixXd C(m, n);	// Output matrix
+	Eigen::MatrixXd D(m, l);	// Feedforward matrix
+	Eigen::MatrixXd Q(n, n);	// Process noise covariance
+	Eigen::MatrixXd R(m, m);	// Measurement noise covariance
+	Eigen::MatrixXd P(n, n);	// Estimate error covariance
 
 	// Discrete LTI projectile motion, measuring position only
 	A << 1, dt, 0, 0, 1, dt, 0, 0, 1;
+	B << 0, 0, 0;
 	C << 1, 0, 0;
+	D << 0;
 
 	// Reasonable covariance matrices
 	Q << .05, .05, .0, .05, .05, .0, .0, .0, .0;
@@ -33,13 +38,15 @@ int main() {
 	P << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
 
 	std::cout << "A: \n" << A << std::endl;
+	std::cout << "B: \n" << B << std::endl;
 	std::cout << "C: \n" << C << std::endl;
+	std::cout << "D: \n" << D << std::endl;
 	std::cout << "Q: \n" << Q << std::endl;
 	std::cout << "R: \n" << R << std::endl;
 	std::cout << "P: \n" << P << std::endl;
 
 	// Construct the filter
-	KalmanFilter kf(dt, A, C, Q, R, P);
+	KalmanFilter kf(dt, A, B, C, D, Q, R, P);
 
 	// List of noisy position measurements (y)
 	std::vector<double> measurements = {
@@ -53,6 +60,7 @@ int main() {
 		1.86967808173, 1.18073207847, 1.10729605087, 0.916168349913, 0.678547664519,
 		0.562381751596, 0.355468474885, -0.155607486619, -0.287198661013, -0.602973173813
 	};
+	std::vector<double> input = { 0 };
 
 	// Best guess of initial states
 	Eigen::VectorXd x0(n);
@@ -61,15 +69,17 @@ int main() {
 
 	// Feed measurements into filter, output estimated states
 	double t = 0;
-	Eigen::VectorXd y(m);
-	std::cout << "t = " << t << ", " << "x_hat[0]: " << kf.state().transpose() << std::endl;
-	for (int i = 0; i < measurements.size(); i++) 
+	Eigen::VectorXd y(m); 
+	Eigen::VectorXd u(l);
+	std::cout << "t = " << t << ", " << "x_hat[0]: " << kf.getStateEst().transpose() << std::endl;
+	for (int i = 0; i < measurements.size(); ++i) 
 	{
 		t += dt;
 		y << measurements[i];
-		kf.update(y);
+		u << 0; // input is 0;
+		kf.update(y, u);
 		std::cout << "t = " << t << ", " << "\ty[" << i << "] = " << y.transpose()
-		<< ", x_hat[" << i << "] = " << kf.state().transpose() << std::endl;
+		<< ", x_hat[" << i << "] = " << kf.getStateEst().transpose() << std::endl;
 	}
   std::cout << "So far so good! 01/05/2019" << std::endl;
   return 0;

@@ -11,15 +11,17 @@
 
 // Constructor 1
 KalmanFilter::KalmanFilter(
-    double dt,
+    double Ts,
     const Eigen::MatrixXd& A,
-    const Eigen::MatrixXd& C,
-    const Eigen::MatrixXd& Q,
+	const Eigen::MatrixXd& B,
+	const Eigen::MatrixXd& C,
+	const Eigen::MatrixXd& D, 
+	const Eigen::MatrixXd& Q,
     const Eigen::MatrixXd& R,
     const Eigen::MatrixXd& P)
-  : A(A), C(C), Q(Q), R(R), P0(P),
-    m(C.rows()), n(A.rows()), dt(dt), initialized(false),
-    I(n, n), x_hat(n), x_hat_new(n)
+  : Ts(Ts), A_(A), B_(B), C_(C), D_(D), Q_(Q), R_(R), P_aPost(P),
+    nY(C.rows()), nX(A.rows()), initialized(false),
+    I(nX, nX), x_aPrio(nX), x_aPost(nX)
 {
 	I.setIdentity();
 }
@@ -27,48 +29,49 @@ KalmanFilter::KalmanFilter(
 // Constructor 2
 KalmanFilter::KalmanFilter() {}
 
-void KalmanFilter::init(double t0, const Eigen::VectorXd& x0) {
-	x_hat = x0;
-	P = P0;
+void KalmanFilter::init(double t0, const Eigen::VectorXd& x0) 
+{
+	x_aPost = x0;
+	P_aPrio = P_aPost;
 	this->t0 = t0;
 	t = t0;
 	initialized = true;
 }
 
-void KalmanFilter::init() {
-	x_hat.setZero();
-	P = P0;
+void KalmanFilter::init() 
+{
+	x_aPost.setZero();
+	P_aPrio = P_aPost;
 	t0 = 0;
 	t = t0;
 	initialized = true;
 }
 
-void KalmanFilter::update(const Eigen::VectorXd& y) { // y is actual measurement and is not being updated
-
+void KalmanFilter::update(const Eigen::VectorXd& y, // y is actual measurement and is not being updated
+										const Eigen::VectorXd& u) 
+{ 
 	if (!initialized) {
 		throw std::runtime_error("Filter is not initialized!");
 	}
 
 	// Time update
-	x_hat_new = A * x_hat; // a priori state estimate; missing B * U
-	P = A * P * A.transpose() + Q; // a priori error covariance estimate
+	x_aPrio = A_ * x_aPost + B_ * u; // a-priori state estimate using a-posteriori estimate from last iteration
+	P_aPrio = A_ * P_aPost * A_.transpose() + Q_; // a-priori error covariance estimate
 
 	// Measurement update
-	K = P * C.transpose() * (C * P * C.transpose() + R).inverse(); // Kalman gain
-	x_hat_new += K * (y - C*x_hat_new); // a posteriori state estimate
-	P = (I - K*C)*P; // a posteriori error covariance estimate
-
-	// Assign back to x_hat for use in the next instance
-	x_hat = x_hat_new;
+	K = P_aPrio * C_.transpose() * (C_ * P_aPrio * C_.transpose() + R_).inverse(); // Kalman gain
+	x_aPost = x_aPrio + K * (y - C_ * x_aPrio - D_ * u); // a posteriori state estimate
+	P_aPost = (I - K * C_) * P_aPrio; // a posteriori error covariance estimate
 
 	// Record t, mainly used for plotting
-	t += dt;
+	t += Ts;
 }
 
-void KalmanFilter::update(const Eigen::VectorXd& y, double dt, const Eigen::MatrixXd A) {
-
+void KalmanFilter::update(const Eigen::VectorXd& y, const Eigen::VectorXd& u, 
+										double Ts, const Eigen::MatrixXd A) 
+{
 	// Time-varing A and dt?
-	this->A = A;
-	this->dt = dt;
-	update(y);
+	this->A_ = A;
+	this->Ts = Ts;
+	update(y, u);
 }
