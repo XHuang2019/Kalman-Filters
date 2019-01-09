@@ -24,7 +24,6 @@ int main() {
 	Eigen::MatrixXd D(m, l);	// Feedforward matrix
 	Eigen::MatrixXd Q(n, n);	// Process noise covariance
 	Eigen::MatrixXd R(m, m);	// Measurement noise covariance
-	Eigen::MatrixXd P(n, n);	// Estimate error covariance
 
 	// Discrete LTI projectile motion, measuring position only
 	A << 1, dt, 0, 0, 1, dt, 0, 0, 1;
@@ -35,7 +34,6 @@ int main() {
 	// Reasonable covariance matrices
 	Q << .05, .05, .0, .05, .05, .0, .0, .0, .0;
 	R << 5;
-	P << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
 
 	std::cout << "A: \n" << A << std::endl;
 	std::cout << "B: \n" << B << std::endl;
@@ -43,10 +41,9 @@ int main() {
 	std::cout << "D: \n" << D << std::endl;
 	std::cout << "Q: \n" << Q << std::endl;
 	std::cout << "R: \n" << R << std::endl;
-	std::cout << "P: \n" << P << std::endl;
 
 	// Construct the filter
-	KalmanFilter kf(dt, A, B, C, D, Q, R, P);
+	KalmanFilter kf(dt, A, B, C, D, Q, R);
 
 	// List of noisy position measurements (y)
 	std::vector<double> measurements = {
@@ -60,12 +57,13 @@ int main() {
 		1.86967808173, 1.18073207847, 1.10729605087, 0.916168349913, 0.678547664519,
 		0.562381751596, 0.355468474885, -0.155607486619, -0.287198661013, -0.602973173813
 	};
-	std::vector<double> input = { 0 };
 
-	// Best guess of initial states
+	// Initial states and covariance
 	Eigen::VectorXd x0(n);
 	x0 << measurements[0], 0, -9.81;
-	kf.init(0, x0);
+	Eigen::MatrixXd P0(n, n);	// Initial error covariance
+	P0 << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
+	kf.init(0, x0, P0);
 
 	// Feed measurements into filter, output estimated states
 	double t = 0;
@@ -81,6 +79,6 @@ int main() {
 		std::cout << "t = " << t << ", " << "\ty[" << i << "] = " << y.transpose()
 		<< ", x_hat[" << i << "] = " << kf.getStateEst().transpose() << std::endl;
 	}
-  std::cout << "So far so good! 01/05/2019" << std::endl;
+  std::cout << "So far so good! 01/09/2019" << std::endl;
   return 0;
 }

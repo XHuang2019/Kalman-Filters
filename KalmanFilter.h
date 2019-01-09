@@ -1,7 +1,7 @@
 /** Discrete-time standard Kalman Filter for simple linear system expressed in state space form
 * @original author: Hayk Martirosyan https://github.com/hmartiro/kalman-cpp.git
-* @revised by Xiaoyu Huang on 2019.01.05
-Future modification:
+* @revised by Xiaoyu Huang 01/2019
+Future modifications:
 1. Check dimensions
 2. Visualize results
 */
@@ -40,18 +40,19 @@ public:
 		const Eigen::MatrixXd& C,
 		const Eigen::MatrixXd& D, 
 		const Eigen::MatrixXd& Q,
-		const Eigen::MatrixXd& R,
-		const Eigen::MatrixXd& P
+		const Eigen::MatrixXd& R
 	);
 	
-	// Constructor 2:  blank filter.
+	// Constructor 2:  blank filter (revise later)
 	KalmanFilter();
 	
-	// Initialize the filter with initial states as zero.
+	// Initialize the filter with zero states.
 	void init();
 
-	// Initialize the filter with a guess for initial states.
-	void init(double t0, const Eigen::VectorXd& x0);
+	// Initialize the filter.
+	void init(double t0, 
+				 const Eigen::VectorXd& x0,
+				 const Eigen::MatrixXd& P0);
 
 	// Set state matrix A
 	void setA(const Eigen::MatrixXd &A) { A_ = A; }
@@ -90,10 +91,8 @@ public:
 	const Eigen::MatrixXd &getR() const { return R_; }
 
 	// Update the estimated state based on measured values.The time step is assumed to remain constant.
-	void update(const Eigen::VectorXd& y, const Eigen::VectorXd& u);
-
-	// Update the estimated state based on measured values using the given time step and dynamics matrix (needed?)
-	void update(const Eigen::VectorXd& y, const Eigen::VectorXd& u, double dt, const Eigen::MatrixXd A);
+	void update(const Eigen::VectorXd& y,
+					   const Eigen::VectorXd& u);
 
 	// Return the current state estimate
 	Eigen::VectorXd getStateEst() const { return x_aPost; }
@@ -106,7 +105,7 @@ public:
 
 private:
 	// Sampling time
-	double Ts;
+	double Ts_;
 
 	// Dimensions
 	int nX; // dimension of states (n)
@@ -131,7 +130,7 @@ private:
 	// Measurement noise covariance (nY by nY)
 	Eigen::MatrixXd R_;
 
-	// Kalman gain 
+	// Kalman gain (nX by nY)
 	Eigen::MatrixXd K;
 
 	// a-priori error covariance (nX by nX)
