@@ -1,6 +1,0 @@
-Try implementing standard discrete-time Kalman Filter using c++
-Inputs:
-
-Outputs:
-
-Later, this project will be added to github.
